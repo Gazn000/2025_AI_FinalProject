@@ -51,9 +51,8 @@ class CityFlow_1x1_LowTraffic(gym.Env):
         self.intersection_id = "intersection_1_1"
 
         self.sec_per_step = 1.0
-        self.action_space = spaces.Discrete(9)
 
-        self.steps_per_episode = 1500
+        self.steps_per_episode = 100
         self.current_step = 0
         self.is_done = False
         self.reward_range = (-float('inf'), float('inf'))
@@ -151,6 +150,12 @@ class CityFlow_1x1_LowTraffic(gym.Env):
         if self.mode == "start_waiting":
             self.state_space = len(self.start_lane_ids)
         """
+        
+        self.action_space = spaces.Discrete(9)
+        if self.mode == "all_all":
+            self.observation_space = spaces.MultiDiscrete([100]*16)
+        else:
+            self.observation_space = spaces.MultiDiscrete([100]*8)
 
     def step(self, action):
         assert self.action_space.contains(action), "%r (%s) invalid"%(action, type(action))
