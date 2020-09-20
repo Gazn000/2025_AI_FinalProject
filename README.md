@@ -1,3 +1,4 @@
+# Gym environment for CityFlow
 
 ## Basics
 
@@ -33,6 +34,20 @@ env = gym.make('gym_cityflow:CityFlow-1x1-LowTraffic-v0')
 CityFlow `config.json`, `flow.json`, and `roadnet.json` are from [CityFlow/examples](https://github.com/cityflow-project/CityFlow/tree/master/examples)
 
 ---
+
+## Test Run with DQN
+```python
+import gym
+import gym_cityflow
+import numpy as np
+from stable_baselines.deepq.policies import MlpPolicy
+from stable_baselines.common.vec_env import DummyVecEnv
+from stable_baselines import DQN
+
+env = gym.make('gym_cityflow:CityFlow-1x1-LowTraffic-v0')
+model = DQN(MlpPolicy, env, verbose=1)
+model.learn(total_timesteps=25000)
+```
 
 ## How to add new environments to `gym`
 
