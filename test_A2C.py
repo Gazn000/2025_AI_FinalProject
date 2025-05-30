@@ -1,16 +1,13 @@
 import gym
 import gym_cityflow
 import numpy as np
-import os
-#from stable_baselines.deepq.policies import MlpPolicy
-#from stable_baselines.common.vec_env import DummyVecEnv
-#from stable_baselines import DQN
-from stable_baselines3 import DQN
-from stable_baselines3.common.env_util import make_vec_env
+from stable_baselines3 import A2C
+
 
 import csv
 from stable_baselines3.common.callbacks import BaseCallback
 import pandas as pd
+
 
 class Logger(BaseCallback):
     def __init__(self, log_freq, log_path, verbose=0):
@@ -33,45 +30,23 @@ class Logger(BaseCallback):
                     ))
         return True
 
-    def _on_training_end(self):
+    def _on_training_end(self) -> None:
         df = pd.DataFrame(self.records, columns=["timesteps", "avg_waiting_time", "max_waiting_time", "throughput"])
         df.to_csv(self.log_path, index=False)
         if self.verbose > 0:
-            print(f"Saved waiting time log to {self.log_path}")
-
-def get_next_model_path(base_dir="Result", base_name="deepq_1x1"):
-    i = 1
-    while True:
-        path = os.path.join(base_dir, f"{base_name}_{i}")
-        if not os.path.exists(path):
-            return path
-        i += 1
+            print(f"Saved training logs to {self.log_path}")
 
 if __name__ == "__main__":
     env = gym.make('gym_cityflow:CityFlow-1x1-LowTraffic-v0')
-    model = DQN("MlpPolicy", env, learning_rate=1e-3, verbose=1)
-    log_interval = 10
+    model = A2C("MlpPolicy", env, verbose=1)
     total_episodes = 101
-    #model.learn(total_timesteps=env.steps_per_episode*total_episodes, log_interval=log_interval)
-    # model.save("Result/deepq_1x1")
-    save_path = get_next_model_path()
-    callback = Logger(
-        log_freq=log_interval,
-        log_path= "Result/20_log.csv",
-        verbose=1
-    )
+    log_interval = 10
+    logger = Logger(log_freq=log_interval, log_path="Result/a2c_training_log.csv", verbose=1)
+    model.learn(total_timesteps=env.steps_per_episode * total_episodes, callback=logger)
+    model.save("Result/a2c_1x1")
 
-    model.learn(
-        total_timesteps=env.steps_per_episode * total_episodes,
-        log_interval=log_interval,
-        callback=callback
-    )
-    model.save(save_path)
+    model = A2C.load("Result/a2c_1x1")
 
-    #model = DQN.load("Result/deepq_1x1")
-    model = DQN.load(save_path)
-    env.set_save_replay(True)
-    env.set_replay_path("/home/fanyi/AI/gym_cityflow/gym_cityflow/envs/1x1_config")
     obs = env.reset()
     while True:
         action, _states = model.predict(obs)

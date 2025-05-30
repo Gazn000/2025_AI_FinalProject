@@ -50,6 +50,7 @@ class CityFlow_1x1_LowTraffic(gym.Env):
         self.cityflow = cityflow.Engine(os.path.join(self.config_dir, "config.json"), thread_num=1)
         self.intersection_id = "intersection_1_1"
 
+        self.vehicle_waiting_time = {}
         self.sec_per_step = 1.0
 
         self.steps_per_episode = 100
@@ -163,7 +164,9 @@ class CityFlow_1x1_LowTraffic(gym.Env):
         self.cityflow.next_step()
 
         state = self._get_state()
-        reward = self._get_reward()
+        self._update_waiting_time()
+        #reward = self._get_reward()
+        reward, info = self._get_reward()
 
         self.current_step += 1
 
@@ -175,8 +178,8 @@ class CityFlow_1x1_LowTraffic(gym.Env):
 
         if self.current_step + 1 == self.steps_per_episode:
             self.is_done = True
-
-        return state, reward, self.is_done, {}
+            
+        return state, reward, self.is_done, info
 
 
     def reset(self):
@@ -184,6 +187,7 @@ class CityFlow_1x1_LowTraffic(gym.Env):
         self.is_done = False
         self.current_step = 0
 
+        self.vehicle_waiting_time = {}
         return self._get_state()
 
     def render(self, mode='human'):
@@ -208,6 +212,28 @@ class CityFlow_1x1_LowTraffic(gym.Env):
 
         return state
 
+    def _update_waiting_time(self):
+        all_lanes_vehicles = self.cityflow.get_lane_vehicles()
+        vehicle_speeds = self.cityflow.get_vehicle_speed()
+        
+        waiting_vehicles_current = set()
+        
+        for lane_id, vehicle_ids in all_lanes_vehicles.items():
+            for v_id in vehicle_ids:
+                speed = float(vehicle_speeds.get(v_id, 0))
+                if speed < 0.1:
+                    waiting_vehicles_current.add(v_id)
+        
+        for v_id in waiting_vehicles_current:
+            if v_id in self.vehicle_waiting_time:
+                self.vehicle_waiting_time[v_id] += self.sec_per_step
+            else:
+                self.vehicle_waiting_time[v_id] = self.sec_per_step
+        
+        for v_id in list(self.vehicle_waiting_time.keys()):
+            if v_id not in waiting_vehicles_current:
+                del self.vehicle_waiting_time[v_id]
+    '''
     def _get_reward(self):
         lane_waiting_vehicles_dict = self.cityflow.get_lane_waiting_vehicle_count()
         reward = 0.0
@@ -224,7 +250,72 @@ class CityFlow_1x1_LowTraffic(gym.Env):
                     reward -= self.sec_per_step * num_vehicles
 
         return reward
+    '''
+    
+    def _get_reward(self):
+        total_weighted_waiting_time = 0.0
+        num_waiting_vehicles = 0
+        max_waiting_time = 0.0
+        lane_to_road = {lane_id: "_".join(lane_id.split("_")[:-1]) for lane_id in self.all_lane_ids}
+      
+        if self.mode == "all_all":
+            target_roads = set(lane_to_road[lane_id] for lane_id in self.all_lane_ids)
+            for vehicle_id, waiting_time in self.vehicle_waiting_time.items():
+                vehicle_info = self.cityflow.get_vehicle_info(vehicle_id)
+                current_road = vehicle_info.get("road", None)
+                if current_road in target_roads:
+                    total_weighted_waiting_time += waiting_time **2
+                    num_waiting_vehicles += 1
+                    max_waiting_time = max(max_waiting_time, waiting_time)
+        if self.mode == "start_waiting":
+            target_roads = set(lane_to_road[lane_id] for lane_id in self.start_lane_ids)
+            for vehicle_id, waiting_time in self.vehicle_waiting_time.items():
+                vehicle_info = self.cityflow.get_vehicle_info(vehicle_id)
+                current_road = vehicle_info.get("road", None)
+                if current_road in target_roads:
+                    total_weighted_waiting_time += waiting_time **2
+                    num_waiting_vehicles += 1
+                    max_waiting_time = max(max_waiting_time, waiting_time)
+        reward = -total_weighted_waiting_time / 10000.0
+        avg_waiting_time = (sum(self.vehicle_waiting_time.values()) / num_waiting_vehicles) if num_waiting_vehicles > 0 else 0
+        throughput = self.cityflow.get_vehicle_count() if hasattr(self.cityflow, "get_vehicle_count") else 0
+        info = {
+            "avg_waiting_time": avg_waiting_time,
+            "max_waiting_time": max_waiting_time,
+            "throughput": throughput
+        }
+        return reward, info
+    '''
+    def _get_reward(self):
+        lane_waiting_vehicles_dict = self.cityflow.get_lane_waiting_vehicle_count()
+        reward = 0.0
 
+        if self.mode == "all_all":
+            for (road_id, num_vehicles) in lane_waiting_vehicles_dict.items():
+                if road_id in self.all_lane_ids:
+                    reward -= self.sec_per_step * num_vehicles
+            total_waiting = sum(num for road, num in lane_waiting_vehicles_dict.items() if road in self.all_lane_ids)
+        elif self.mode == "start_waiting":
+            for (road_id, num_vehicles) in lane_waiting_vehicles_dict.items():
+                if road_id in self.start_lane_ids:
+                    reward -= self.sec_per_step * num_vehicles
+
+            total_waiting = sum(num for road, num in lane_waiting_vehicles_dict.items() if road in self.start_lane_ids)
+        else:
+            total_waiting = 0
+
+        max_waiting_time = 0.0  
+        throughput = self.cityflow.get_vehicle_count() if hasattr(self.cityflow, "get_vehicle_count") else 0
+        avg_waiting_time = total_waiting
+
+        info = {
+            "avg_waiting_time": avg_waiting_time,
+            "max_waiting_time": max_waiting_time,
+            "throughput": throughput
+        }
+
+        return reward, info
+    '''
     def set_replay_path(self, path):
         self.cityflow.set_replay_file(path)
 
