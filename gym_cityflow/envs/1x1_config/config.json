@@ -1,7 +1,7 @@
 {
     "interval": 1.0,
     "seed": 1,
-    "dir": "/app/gym_cityflow/envs/1x3_config/",
+    "dir": "/app/gym_cityflow/envs/1x1_config/",
     "roadnetFile": "roadnet.json",
     "flowFile": "flow.json",
     "rlTrafficLight": true,
