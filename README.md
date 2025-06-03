@@ -25,6 +25,38 @@ You only need to install a few additional Python packages inside the container:
 python -c "import cityflow"
 ````
 ## Project Structure
+```plaintxt
+2025_AI_FinalProject/
+├── Plot_result/                         # Folder for storing result plots (e.g., reward curves)
+├── gym_cityflow/                        # Custom Gym-compatible environment for CityFlow
+│   ├── __init__.py
+│   └── envs/
+│       ├── 1x1_config/                  # Configuration files for 1×1 road network
+│       ├── 1x3_config/                  # Configuration files for 1×3 road network
+│       ├── 2x2_config/                  # Configuration files for 2×2 road network
+│       ├── CityFlow_1x1_LowTraffic.py   # Environment script for 1×1 with low traffic
+│       ├── CityFlow_1x3_LowTraffic.py
+│       ├── CityFlow_2x2_LowTraffic.py
+│       ├── __init__.py
+│       └── README.md
+├── .gitignore                           # Git ignore rules
+├── README.md                            # Main documentation
+├── requirements.txt                     # Python dependencies list
+├── setup.py                             # Optional setup script
+├── test.py                              # Basic test or baseline run
+├── test_A2C.py                          # Training and testing with A2C algorithm
+├── test_DQN.py                          # Training and testing with DQN
+├── test_PPO.py                          # Training and testing with PPO
+├── test_QR_DQN.py                       # Training and testing with QR-DQN
+├── compare_1x1.py                       # Compare models on 1×1 network
+├── compare_1x3.py
+├── compare_2x2.py
+├── compare_reward.py                    # Compare reward trends across models
+├── compare_self.py                      # Custom comparison script
+├── new_plot.py                          # Additional plotting script
+├── new_plot_reward.py                   # Additional reward plotting script
+
+```
 ## Usage
 ### Data
 You can find `1x1_config`, `2x2_config`, `1x3_config` folders.  
