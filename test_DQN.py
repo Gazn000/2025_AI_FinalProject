@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
     callback = Logger(
         log_freq=log_interval,
-        log_path= "Result/dqn_newreward.csv",
+        log_path= "dqn.csv",
         verbose=1
     )
 
@@ -58,12 +58,11 @@ if __name__ == "__main__":
         log_interval=log_interval,
         callback=callback
     )
-    model.save("Result/cmp_reward")
+    model.save("deepq_1x1")
 
-    #model = DQN.load("Result/deepq_1x1")
-    model = DQN.load("Result/cmp_reward")
+    model = DQN.load("deepq_1x1")
     env.set_save_replay(True)
-    env.set_replay_path("/home/fanyi/AI/gym_cityflow/gym_cityflow/envs/1x1_config")
+    env.set_replay_path("gym_cityflow/envs/1x1_config")
     obs = env.reset()
     while True:
         action, _states = model.predict(obs)
