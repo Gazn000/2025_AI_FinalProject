@@ -34,7 +34,7 @@ Check your config.json dir in the folder:
 {
     "interval": 1.0,
     "seed": 1,
-    "dir": "/app/gym_cityflow/envs/1x1_config/",
+    "dir": "/gym_cityflow/envs/1x1_config/",
     "roadnetFile": "roadnet.json",
     "flowFile": "flow.json",
     "rlTrafficLight": true,
@@ -57,12 +57,17 @@ Upload roadnetlog.json and replay.txt and play start.
 ![image](https://github.com/user-attachments/assets/c1222943-994e-4fd3-b53f-ed675ba01f0e)
 
 ## Hyperparameters
-- Learning rate
+- policy = "MlpPolicy"
+- Learning rate = 0.0000625
+- log_interval = 10
+- total_episode = 100
+- Other hyperparameters are set as default
 
 ## Experiment Results
 ### Results on Intersection of Guangfu and Daxue Road
 
-The following figure compares 4 key metrics across different algorithms.
+The following figure compares 4 key metrics across different algorithms.  
+![image](https://github.com/user-attachments/assets/c98f2686-a756-42c1-aefb-414a3a649918)
 
 The **X-axis** shows the number of training episodes.  
 The **Y-axis** shows the corresponding metric for each plot.
