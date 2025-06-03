@@ -41,11 +41,11 @@ if __name__ == "__main__":
     model = A2C("MlpPolicy", env, learning_rate=1e-3,verbose=1)
     total_episodes = 101
     log_interval = 10
-    logger = Logger(log_freq=log_interval, log_path="Result/a2c_log.csv", verbose=1)
+    logger = Logger(log_freq=log_interval, log_path="a2c_log.csv", verbose=1)
     model.learn(total_timesteps=env.steps_per_episode * total_episodes, callback=logger)
-    model.save("Result/a2c_1x1")
+    model.save("a2c_1x1")
 
-    model = A2C.load("Result/a2c_1x1")
+    model = A2C.load("a2c_1x1")
 
     obs = env.reset()
     while True:
