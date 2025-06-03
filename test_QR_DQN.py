@@ -35,13 +35,6 @@ class Logger(BaseCallback):
         if self.verbose > 0:
             print(f"Saved waiting time log to {self.log_path}")
 
-def get_next_model_path(base_dir="Result", base_name="deepq_1x1"):
-    i = 1
-    while True:
-        path = os.path.join(base_dir, f"{base_name}_{i}")
-        if not os.path.exists(path):
-            return path
-        i += 1
 if __name__ == "__main__":
     env = gym.make("gym_cityflow:CityFlow-1x1-LowTraffic-v0")
     model = QRDQN("MlpPolicy", env, verbose=1)
@@ -50,11 +43,11 @@ if __name__ == "__main__":
     total_episodes = 101
     steps_per_episode = env.unwrapped.steps_per_episode
 
-    logger = Logger(log_freq=log_interval, log_path="Result/QR_DQN_log.csv", verbose=1)
+    logger = Logger(log_freq=log_interval, log_path="QR_DQN_log.csv", verbose=1)
     model.learn(total_timesteps=env.steps_per_episode * total_episodes, callback=logger)
 
-    model.save("Result/qrdqn_1x1")
-    model = QRDQN.load("Result/qrdqn_1x1")
+    model.save("qrdqn_1x1")
+    model = QRDQN.load("qrdqn_1x1")
     obs = env.reset()
     while True:
         action, _ = model.predict(obs, deterministic=True)
