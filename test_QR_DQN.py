@@ -1,42 +1,65 @@
 import gym
-import gym_cityflow  # Make sure your CityFlow environment is registered
+import gym_cityflow 
 from sb3_contrib import QRDQN
-from stable_baselines3.common.monitor import Monitor
+#from stable_baselines3.common.monitor import Monitor
+from stable_baselines3.common.env_util import make_vec_env
 
+import csv
+from stable_baselines3.common.callbacks import BaseCallback
+import pandas as pd
+
+class Logger(BaseCallback):
+    def __init__(self, log_freq, log_path, verbose=0):
+        super().__init__(verbose)
+        self.log_freq = log_freq
+        self.log_path = log_path
+        self.records = []
+
+    def _on_step(self) -> bool:
+        if self.n_calls % self.log_freq == 0:
+            infos = self.locals.get('infos', [])
+            if infos:
+                info = infos[0]
+                if 'avg_waiting_time' in info and 'max_waiting_time' in info and 'throughput' in info:
+                    self.records.append((
+                        self.num_timesteps,
+                        info['avg_waiting_time'],
+                        info['max_waiting_time'],
+                        info['throughput']
+                    ))
+        return True
+
+    def _on_training_end(self):
+        df = pd.DataFrame(self.records, columns=["timesteps", "avg_waiting_time", "max_waiting_time", "throughput"])
+        df.to_csv(self.log_path, index=False)
+        if self.verbose > 0:
+            print(f"Saved waiting time log to {self.log_path}")
+
+def get_next_model_path(base_dir="Result", base_name="deepq_1x1"):
+    i = 1
+    while True:
+        path = os.path.join(base_dir, f"{base_name}_{i}")
+        if not os.path.exists(path):
+            return path
+        i += 1
 if __name__ == "__main__":
-    # Create the CityFlow traffic environment
     env = gym.make("gym_cityflow:CityFlow-1x1-LowTraffic-v0")
-    env = Monitor(env)  # Wrap with Monitor to record training statistics
-
-    # Initialize the QRDQN model with MLP policy
     model = QRDQN("MlpPolicy", env, verbose=1)
-
-    # Training settings
+    
     log_interval = 10
-    total_episodes = 100
-    steps_per_episode = env.unwrapped.steps_per_episode  # Custom field in your env
+    total_episodes = 101
+    steps_per_episode = env.unwrapped.steps_per_episode
 
-    # Start training the model
-    model.learn(
-        total_timesteps=steps_per_episode * total_episodes,
-        log_interval=log_interval
-    )
+    logger = Logger(log_freq=log_interval, log_path="Result/QR_DQN_log.csv", verbose=1)
+    model.learn(total_timesteps=env.steps_per_episode * total_episodes, callback=logger)
 
-    # Save the trained model
-    model.save("qrdqn_1x1")
-
-    # Load the model for inference
-    model = QRDQN.load("qrdqn_1x1")
-
-    # Run the trained model in an infinite loop for testing
+    model.save("Result/qrdqn_1x1")
+    model = QRDQN.load("Result/qrdqn_1x1")
     obs = env.reset()
     while True:
-        # Predict the best action deterministically
         action, _ = model.predict(obs, deterministic=True)
+        obs, reward, done, info = env.step(action)
 
-        # Apply the action to the environment
-        obs, reward, done, truncated, info = env.step(action)
-
-        # If episode ends, reset the environment
-        if done or truncated:
+        # truncated need to set
+        if done:
             obs = env.reset()

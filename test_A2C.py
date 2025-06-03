@@ -38,10 +38,10 @@ class Logger(BaseCallback):
 
 if __name__ == "__main__":
     env = gym.make('gym_cityflow:CityFlow-1x1-LowTraffic-v0')
-    model = A2C("MlpPolicy", env, verbose=1)
+    model = A2C("MlpPolicy", env, learning_rate=1e-3,verbose=1)
     total_episodes = 101
     log_interval = 10
-    logger = Logger(log_freq=log_interval, log_path="Result/a2c_training_log.csv", verbose=1)
+    logger = Logger(log_freq=log_interval, log_path="Result/a2c_log.csv", verbose=1)
     model.learn(total_timesteps=env.steps_per_episode * total_episodes, callback=logger)
     model.save("Result/a2c_1x1")
 

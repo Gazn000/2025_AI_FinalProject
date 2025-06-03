@@ -1,110 +1,95 @@
-# Gym environment for CityFlow
-
-## Basics
-
-`gym_cityflow` adds a custom environment from CityFlow following this [tutorial](https://github.com/openai/gym/blob/master/docs/creating-environments.md).
- 
+# 2025_AI_FinalProject
+This is the final project for the 2025 Spring Intro to AI course. It uses [CityFlow](https://cityflow-project.github.io) to simulate city traffic and trains AI models to optimize traffic light control.
+## System Requirements
+- Python 3.6
+- pip/conda
+- Linux/macOS/Windows (recommend to use Linux and WSL2)
+## Installation
+CityFlow environment setup please refer to [Installation](https://cityflow.readthedocs.io/en/latest/install.html)
+1. Clone the project:
+```bash
+git clone https://github.com/Gazn000/2025_AI_FinalProject.git
+cd 2025_AI_FinalProject
 ```
-gym_cityflow/
-  README.md
-  setup.py
-  test.py
-  gym_cityflow/
-    __init__.py
-    envs/
-      __init__.py
-      fcityflow_1x1.py
-      1x1_config/
-        config.json
-        flow.json
-        roadnet.json
+2. Install Python dependencies:
+```bash
+pip install -r requirements.txt
 ```
+  If you are using Docker, most dependencies are already included in the image.
+You only need to install a few additional Python packages inside the container:
+  ```bash 
+  pip install gym stable_baselines3
+  ```
+3. Verify CityFlow installation:
+```bash
+python -c "import cityflow"
+````
+## Project Structure
+## Usage
+### Data
+You can find `1x1_config`, `2x2_config`, `1x3_config` folders.  
+According to you roadnet size to change the specific folder of roadnet.json and flow.json. (Guangfu Rd. is 1x1 roadnet)  
+Check your config.json dir in the folder:
+```json
+{
+    "interval": 1.0,
+    "seed": 1,
+    "dir": "/app/gym_cityflow/envs/1x1_config/",
+    "roadnetFile": "roadnet.json",
+    "flowFile": "flow.json",
+    "rlTrafficLight": true,
+    "saveReplay": true,
+    "roadnetLogFile": "roadnetlog.json",
+    "replayLogFile": "replay.txt"
+}
 
-## Installation 
- 
- `pip install -e .`
- 
+```
+### Result
+Each `test_XXX.py` is a different model, to visualize training results of each model:
+1. Change the dir to the correct roadnet folder name: line 49 
 ```python
-import gym
-import gym_cityflow
-
-env = gym.make('gym_cityflow:CityFlow-1x1-LowTraffic-v0')
+self.config_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "1x1_config")
 ```
+2. Visualize with frontend
+Find `frontend` html in [CityFlow_Github](https://github.com/cityflow-project/CityFlow)  
+Upload roadnetlog.json and replay.txt and play start.
 
-CityFlow `config.json`, `flow.json`, and `roadnet.json` are from [CityFlow/examples](https://github.com/cityflow-project/CityFlow/tree/master/examples)
+![image](https://github.com/user-attachments/assets/c1222943-994e-4fd3-b53f-ed675ba01f0e)
 
----
+## Hyperparameters
+- Learning rate
 
-## Test Run with DQN
-```python
-import gym
-import gym_cityflow
-import numpy as np
-from stable_baselines.deepq.policies import MlpPolicy
-from stable_baselines.common.vec_env import DummyVecEnv
-from stable_baselines import DQN
+## Experiment Results
+### Results on Intersection of Guangfu and Daxue Road
 
-env = gym.make('gym_cityflow:CityFlow-1x1-LowTraffic-v0')
-model = DQN(MlpPolicy, env, verbose=1)
-model.learn(total_timesteps=25000)
-```
+The following figure compares 4 key metrics across different algorithms.
 
-## How to add new environments to `gym`
+The **X-axis** shows the number of training episodes.  
+The **Y-axis** shows the corresponding metric for each plot.
 
-The explanation below is derived from this [cartpole example](https://github.com/openai/gym/blob/master/gym/envs/classic_control/cartpole.py) which is a part of OpenAI
-s gym.
+#### Average Waiting Time
+- PPO and A2C maintain low waiting times throughout training.
+- DQN shows improvement during training, but remains less stable.
 
-1. Subclass your environment under `gym.Env`
+#### Max Waiting Time
+- PPO and A2C remain relatively stable but do not reach as low as DQN.
+- QR-DQN shows large oscillations and performs the worst on this metric.
+#### Throughput Comparison
+- Except for DQN, other models show similar throughput.
+- Throughput exhibits periodic changes due to bursty traffic patterns.
+#### Reward Comparison
+- PPO, A2C and DQN quickly reach stable and high rewards.
+- QR-DQN show large oscillations, indicating unstable learning.
 
-```python
-import gym
-from gym import error, spaces, utils
-from gym.utils import seeding
+#### Summary
+PPO and A2C outperform DQN and QR-DQN overall.  
+However, DQN shows clear improvement during training.
 
-class MyEnv(gym.Env):
-    metadata = {'render.modes':['human']}
-...
-```
+#### Interesting Finding on Guangfu & Daxue Intersection
+DQN shows a clear downward trend in both average waiting time and max waiting time. By the end of training, DQN outperforms PPO and A2C on these two metrics! This suggests that DQN may have discovered a more effective policy for this particular traffic pattern.
 
-2. override: `__init__(self)`, `step(self, action)`, `reset(self)`, `render(self, mode='human')`, `close(self)`
-
-```python
-import gym
-from gym import error, spaces, utils
-from gym.utils import seeding
-
-class MyEnv(gym.Env):
-    metadata = {'render.modes':['human']}
-    def __init__(self):
-
-    def step(self, action):
-        """
-        Source: https://gym.openai.com/docs/        
-
-        Args:
-            action: action for the agent to take
-
-        Returns:
-            tuple of 4 valuess: (state, reward, is_done, info).
-            
-            state (Object): observation from the agent 
-            reward (float): reward
-            done (boolean): whether the environment has reached a terminal state
-            info (dict): additional information for debugging. MAY NOT be used during evaluation, only 
-            used during debugging.
-        """
-
-    def reset(self):   
-        """
-        Retruns:
-            state (Object): Initial observation
-        """
-
-    def render(self, mode='human'):
-        print("hello world")
-
-    def close(self):
-        """
-        stops the environment
-        """
-```
+## Reference
+- [CityFlow](https://cityflow-project.github.io)
+- [gym](https://www.gymlibrary.dev/index.html)
+- [Deep Reinforcement Learning for Traffic Signal Control](https://ieeexplore.ieee.org/document/9241006?denied=)
+- [Reinforcement Learning for Traffic Signal Control](https://traffic-signal-control.github.io)

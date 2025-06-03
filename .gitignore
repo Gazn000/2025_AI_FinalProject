@@ -13,8 +13,15 @@ Result/
 
 gym_cityflow/envs/1x1_config/replay.txt
 gym_cityflow/envs/1x1_config/roadnetlog.json
+gym_cityflow/envs/1x3_config/replay.txt
+gym_cityflow/envs/1x3_config/roadnetlog.json
+gym_cityflow/envs/2x2_config/replay.txt
+gym_cityflow/envs/2x2_config/roadnetlog.json
 
 *.log
 
 *.pyc
 cityflow_env/
+1x1_result/
+1x3_result/
+2x2_result/
